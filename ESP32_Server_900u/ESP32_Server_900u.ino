@@ -23,7 +23,7 @@
                      // this requires a board with a sd card slot or a sd card connected.
 
 // use FatFS not SPIFFS [ true / false ]
-#define USEFAT true  // FatFS will be used instead of SPIFFS for the storage filesystem or for larger partitons on boards with more than 4mb flash. \
+#define USEFAT false  // FatFS will be used instead of SPIFFS for the storage filesystem or for larger partitons on boards with more than 4mb flash. \
                       // you must select a partition scheme labeled with "FAT" or "FATFS" with this enabled.
 
 // use LITTLEFS not SPIFFS [ true / false ]
@@ -53,9 +53,9 @@
 
 //create access point
 boolean startAP = true;
-String AP_SSID = "Kme900Auto_ESP32S2";
-String AP_PASS = "123456789";
-IPAddress Server_IP(10, 1, 1, 1);
+String AP_SSID = "PiZero";
+String AP_PASS = "password";
+IPAddress Server_IP(7, 7, 7, 1);
 IPAddress Subnet_Mask(255, 255, 255, 0);
 
 //connect to wifi
@@ -740,6 +740,8 @@ void setup() {
     dnsServer.start(53, "*", Server_IP);
     //HWSerial.println("DNS server started");
     //HWSerial.println("DNS Server IP: " + Server_IP.toString());
+    pinMode(15, OUTPUT);
+    digitalWrite(15, HIGH);
   }
 
   if (connectWifi && WIFI_SSID.length() > 0 && WIFI_PASS.length() > 0) {
