@@ -449,27 +449,42 @@ void handleConfigHtml(AsyncWebServerRequest *request) {
 
 
 void handleFileUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
-  if (!index) {
-    String path = request->url();
-    if (path != "/upload.html") {
-      request->send(500, "text/plain", "Internal Server Error");
-      return;
+  
+    if (!filename.startsWith("/")) filename = "/" + filename;
+    if (filename.equals("/config.ini")) return;
+
+    if (index == 0) {  // First chunk
+        //Serial.printf("Starting upload: %s\n", filename.c_str());
+        upFile = FILESYS.open(filename, "w");  // Create or overwrite the file
+        if (!upFile) {
+            //Serial.println("Failed to open file for writing");
+            request->send(500, "text/plain", "File open failed");
+            return;
+        }
+    } else {
+        upFile = FILESYS.open(filename, "a");  // Open in append mode
+        if (!upFile) {
+            //Serial.println("Failed to open file for appending");
+            request->send(500, "text/plain", "File append failed");
+            return;
+        }
     }
-    if (!filename.startsWith("/")) {
-      filename = "/" + filename;
-    }
-    if (filename.equals("/config.ini")) { return; }
-    //HWSerial.printf("Upload Start: %s\n", filename.c_str());
-    upFile = FILESYS.open(filename, "w");
-  }
-  if (upFile) {
+
+    //Serial.printf("Appending %u bytes to %s\n", len, filename.c_str());
     upFile.write(data, len);
-  }
-  if (final) {
+    upFile.flush();  // Ensure data is written immediately
     upFile.close();
-    //HWSerial.printf("upload Success: %uB\n", index+len);
-  }
+
+    //Serial.printf("Wrote %u bytes to %s (Total: %u)\n", len, filename.c_str(), index + len);
+
+    if (final) {
+        //Serial.printf("Upload of %s complete (%u bytes total)\n", filename.c_str(), index + len);
+        request->send(200, "text/plain", "Upload complete");
+    }
 }
+
+
+
 
 
 void handleConsoleUpdate(String rgn, AsyncWebServerRequest *request) {
@@ -609,7 +624,7 @@ void writeConfig() {
 void setup() {
   //HWSerial.begin(115200);
   //HWSerial.println("Version: " + firmwareVer);
-  //USBSerial.begin();
+  //Serial.begin(115200);
 
 #if USBCONTROL && defined(CONFIG_IDF_TARGET_ESP32)
   pinMode(usbPin, OUTPUT);
